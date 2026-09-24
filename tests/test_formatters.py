@@ -71,3 +71,43 @@ def test_quote_revision_formats_discount():
 
 def test_quotes_table_empty_is_explicit():
     assert "no quotes" in commercial.quotes_table([])
+
+
+def test_zero_discount_is_shown_not_hidden():
+    text = commercial.quote_revisions(
+        [{"id": "QREV-1", "quote_id": "Q", "revision_number": 1, "revision_status": "Superseded",
+          "issued_at": "2025-03-10", "discount_rate": 0, "change_summary": "Initial"}]
+    )
+    assert "| QREV-1 | 1 | Superseded | 2025-03-10 | 0% | Initial |" in text
+    assert "highest revision number" in text
+    assert "no revisions" in commercial.quote_revisions([])
+
+
+def test_quote_lines_null_machine_total_and_net_note():
+    text = commercial.quote_lines(
+        [{"id": "QLN-1", "quote_revision_id": "R", "machine_id": None, "price": 1200.5, "description": "Kit"},
+         {"id": "QLN-2", "quote_revision_id": "R", "machine_id": "MCH-0001", "price": None, "description": "Service"}]
+    )
+    assert "| QLN-1 | — | 1200.5 | Kit |" in text and "| QLN-2 | MCH-0001 | — | Service |" in text
+    assert "Total (net): 1200.5" in text and "do not apply the discount again" in text
+    assert "No lines were found" in commercial.quote_lines([])
+
+
+ORDER = {"id": "ORD-1", "quote_id": "QTE-1", "company_id": "CMP-001", "order_status": "Closed", "order_date": "2025-04-08",
+         "expected_delivery_date": "2025-06-24", "shipment_status": "Installed", "currency": "EUR", "notes": None}
+
+
+def test_orders():
+    assert "| ORD-1 | QTE-1 | Closed | Installed | 2025-04-08 | 2025-06-24 | EUR | — |" in commercial.orders_table([ORDER])
+    assert "no orders" in commercial.orders_table([])
+    assert "never became an order" in commercial.orders_by_quote([])
+    assert "**Shipment:** Installed" in commercial.order_details(ORDER)
+    lines = commercial.order_lines([{"id": "OLN-1", "order_id": "ORD-1", "fulfillment_status": "Delivered"}])
+    assert "| OLN-1 | Delivered |" in lines and "fulfilment only" in lines
+    assert "No fulfilment lines were found" in commercial.order_lines([])
+
+
+def test_quote_details():
+    text = commercial.quote_details({"id": "QTE-1", "company_id": "C", "currency": "EUR", "created_at": "2025-03-10",
+                                     "valid_until": "2025-04-24", "description": None})
+    assert "**Quote:** QTE-1" in text and "**Description:** —" in text

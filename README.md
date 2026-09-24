@@ -27,6 +27,20 @@ app/
 Each domain has `tools.py` (registers `@mcp.tool` functions that call the API) and `formatters.py`
 (pure functions turning API JSON into text; unit-tested without a server).
 
+## Tools
+
+**Technical:** `get_company_machines`, `get_machine_details`, `get_latest_telemetry_snapshot`,
+`get_telemetry_summary`, `get_telemetry_history`, `get_alarm_summary`, `get_alarm_history`,
+`get_maintenance_history`, `get_company_maintenance_tickets`.
+
+**Commercial:** `get_company_quotes`, `get_quote_details`, `get_quote_revisions`,
+`get_latest_quote_revision`, `get_quote_lines`, `get_orders_by_quote`, `get_company_orders`,
+`get_order_details`, `get_order_lines`.
+
+Paged tools (`get_telemetry_history`, `get_alarm_history`, `get_maintenance_history`,
+`get_company_maintenance_tickets`) end their output with a `cursor` when more rows exist; pass it back to
+get the next older page. Manuals (signed URLs, excerpt search) are not exposed as tools yet.
+
 ## Adding a tool
 
 1. Add a formatter to the domain's `formatters.py` and a test in `tests/`.

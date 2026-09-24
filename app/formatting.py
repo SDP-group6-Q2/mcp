@@ -32,3 +32,24 @@ def page_note(page: dict[str, Any]) -> str:
         f"\n\nShowing {page['returned_count']} rows; more exist. "
         f"To continue, call again with cursor={page['next_cursor']!r}."
     )
+
+
+def short_ts(value: Any) -> str | None:
+    """'2026-07-06T14:21:00' -> '2026-07-06 14:21'; a plain date is returned as is."""
+    if value is None:
+        return None
+    text = str(value)
+    return text.replace("T", " ")[:16] if "T" in text else text
+
+
+def num(value: Any, digits: int = 1) -> str | None:
+    """Round a number for display, dropping trailing zeros ('91.60' -> '91.6', '26104.3' -> '26104.3')."""
+    if value is None:
+        return None
+    text = f"{round(float(value), digits):.{digits}f}"
+    return text.rstrip("0").rstrip(".") if "." in text else text
+
+
+def page_header(page: dict[str, Any], what: str, order: str) -> str:
+    """'Showing 12 <what> (<order>).' line above a paged table."""
+    return f"Showing {page['returned_count']} {what} ({order})."

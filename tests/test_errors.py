@@ -23,3 +23,9 @@ def test_unexpected_status_reads_as_unavailable():
 def test_timeout_is_distinguished():
     assert "too long" in describe_transport_error(httpx.ReadTimeout("t"))
     assert "unavailable" in describe_transport_error(httpx.ConnectError("c"))
+
+
+def test_422_lists_the_offending_parameter():
+    body = {"detail": [{"loc": ["query", "since"], "msg": "Input should be a valid datetime", "type": "x"}]}
+    message = describe_status(_response(422, body))
+    assert "since: Input should be a valid datetime" in message

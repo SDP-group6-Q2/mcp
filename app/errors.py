@@ -21,8 +21,17 @@ def _detail(response: httpx.Response) -> str:
     try:
         detail = response.json().get("detail")
     except (ValueError, AttributeError):
-        detail = None
-    return detail if isinstance(detail, str) else ""
+        return ""
+    if isinstance(detail, str):
+        return detail
+    if isinstance(detail, list):  # FastAPI validation errors: [{"loc": [...], "msg": "..."}]
+        problems = []
+        for item in detail:
+            if isinstance(item, dict) and "msg" in item:
+                field = ".".join(str(part) for part in item.get("loc", []) if part not in ("query", "path"))
+                problems.append(f"{field}: {item['msg']}" if field else str(item["msg"]))
+        return "; ".join(problems)
+    return ""
 
 
 def describe_status(response: httpx.Response) -> str:
