@@ -39,7 +39,37 @@ Each domain has `tools.py` (registers `@mcp.tool` functions that call the API) a
 
 Paged tools (`get_telemetry_history`, `get_alarm_history`, `get_maintenance_history`,
 `get_company_maintenance_tickets`) end their output with a `cursor` when more rows exist; pass it back to
-get the next older page. Manuals (signed URLs, excerpt search) are not exposed as tools yet.
+get the next older page. Manual PDF links (signed URLs) are not exposed as tools.
+
+**Manuals search** (`get_manual_excerpts`, technical domain) searches one machine's own manual. It first calls
+the API for `GET /machines/{id}` with the user's token, so the API decides who may read which machine's manual
+and supplies the serial number that identifies the manual; only then is the index queried.
+
+## Manuals RAG
+
+The manuals index lives in its **own database** (`rag`) on the shared Postgres, owned by this server. It holds
+derived data only (no company or user data) and can be rebuilt from the PDFs at any time.
+
+- **Ingestion** (`app/rag/ingest.py`): PDF -> outline sections -> boilerplate and table-of-contents pages removed
+  -> section-aware chunks (~200 words, section number/title/breadcrumb and page range kept) -> embeddings.
+  Idempotent: a manual is skipped unless its PDF, the embedding model or the chunker version changed.
+- **Retrieval** (`app/rag/search.py`): per manual, vector search + full-text search, fused (RRF), then the top 15
+  reranked by a cross-encoder; the best 5 are returned with section and page citations.
+- **Models** run on ONNX via fastembed (`BAAI/bge-small-en-v1.5`, `Xenova/ms-marco-MiniLM-L-6-v2`), no torch.
+  They are downloaded on first use into the `mcp_models` volume and loaded at server start.
+
+```bash
+python -m app.rag.ingest                          # every manual in the Supabase bucket
+python -m app.rag.ingest --from-dir /data/manuals # local PDFs (development)
+python -m app.rag.ingest --serial 15610 --force   # re-index one manual
+```
+
+## Container start-up (init scripts)
+
+- `docker-entrypoint.sh` starts the server at once and, in the background, indexes the manuals (Supabase bucket if
+  credentials are set, else `/data/manuals` if mounted). Set `AUTO_INGEST=false` to skip. Until a manual is indexed,
+  its tool says so explicitly.
+- The `db` container's `db/init/01-create-databases.sh` creates the `assistant` and `rag` databases on first run.
 
 ## Adding a tool
 

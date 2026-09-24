@@ -4,6 +4,7 @@ from mcp.server.fastmcp import Context, FastMCP
 
 from app.api_client import ApiClient
 from app.domains.technical import formatters
+from app.rag.service import ManualNotIndexed, manual_excerpts
 
 
 def register(mcp: FastMCP) -> None:
@@ -119,3 +120,21 @@ def register(mcp: FastMCP) -> None:
             "/maintenance-tickets/", {"since": since, "until": until, "cursor": cursor}
         )
         return formatters.company_tickets(page)
+
+    @mcp.tool()
+    async def get_manual_excerpts(machine_id: str, query: str, ctx: Context) -> str:
+        """Search a machine's own use-and-maintenance manual and return the most relevant passages with
+        section and page citations. Use it for operating, maintenance, troubleshooting and safety questions
+        (procedures, maintenance intervals, causes and remedies, technical data). To resolve an alarm, search
+        with the alarm's description (e.g. "low air pressure"), not its code. Each manual documents one
+        specific machine, so pass that machine's id. Ask about one topic per call."""
+        if not query.strip():
+            return "No query was provided. Ask a specific question about the manual."
+        # The API checks the machine belongs to the user's company and returns its serial number, which
+        # is what identifies the manual. Nothing is searched unless that check passes.
+        machine = await ApiClient.for_request(ctx).get(f"/machines/{machine_id}")
+        try:
+            excerpts = await manual_excerpts(machine["serial_number"], query)
+        except ManualNotIndexed:
+            return formatters.manual_not_indexed(machine_id)
+        return formatters.manual_excerpts(machine_id, excerpts)

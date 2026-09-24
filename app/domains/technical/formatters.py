@@ -180,3 +180,28 @@ def company_tickets(page: dict[str, Any]) -> str:
         + table(page["rows"], columns)
         + page_note(page)
     )
+
+
+def _pages(start: int, end: int) -> str:
+    return f"page {start}" if start == end else f"pages {start}–{end}"
+
+
+def manual_excerpts(machine_id: str, excerpts: list[Any]) -> str:
+    """Excerpts with a citation (section and page) so the answer can say where it comes from."""
+    if not excerpts:
+        return (
+            f"No relevant passages were found in the manual of machine {machine_id} for that query. "
+            "Try different wording, or say the manual doesn't cover it; do not answer from general knowledge."
+        )
+    blocks = [f"Excerpts from the manual of machine {machine_id}. Cite the section and page in your answer."]
+    for index, excerpt in enumerate(excerpts, start=1):
+        section = f"{excerpt.section_number} {excerpt.section_title}".strip()
+        blocks.append(f"### {index}. {section} ({_pages(excerpt.page_start, excerpt.page_end)})\n{excerpt.content}")
+    return "\n\n".join(blocks)
+
+
+def manual_not_indexed(machine_id: str) -> str:
+    return (
+        f"The manual of machine {machine_id} has not been indexed for search yet, so it can't be "
+        "searched right now. Tell the user this; do not answer from general knowledge."
+    )

@@ -103,3 +103,23 @@ def test_company_tickets_include_machine_column():
             "returned_count": 1, "truncated": False, "next_cursor": None}
     assert "| TCK-1 | MCH-0007 | 2026-07-07 |" in f.company_tickets(page)
     assert "No maintenance tickets" in f.company_tickets({"rows": [], "returned_count": 0, "truncated": False})
+
+
+class _Excerpt:
+    def __init__(self, number, title, start, end, content):
+        self.section_number, self.section_title, self.page_start, self.page_end, self.content = number, title, start, end, content
+
+
+def test_manual_excerpts_cite_section_and_pages():
+    text = f_manual([_Excerpt("11.5.1.5", "EVERY 6000 WORKING HOURS", 94, 95, "Overhaul the heads."), _Excerpt("", "Front matter", 1, 1, "Cover")])
+    assert "### 1. 11.5.1.5 EVERY 6000 WORKING HOURS (pages 94–95)" in text
+    assert "### 2. Front matter (page 1)" in text and "Overhaul the heads." in text
+
+
+def test_manual_excerpts_empty_and_not_indexed_say_so():
+    assert "No relevant passages" in f_manual([])
+    assert "not been indexed" in f.manual_not_indexed("MCH-0001")
+
+
+def f_manual(excerpts):
+    return f.manual_excerpts("MCH-0001", excerpts)
