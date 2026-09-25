@@ -69,8 +69,13 @@ def quote_lines(lines: list[dict[str, Any]]) -> str:
             "No lines were found for this revision id: it either has no lines or does not exist "
             "(or belongs to another company). Check the id with get_quote_revisions."
         )
-    shaped = [{**line, "price_net": num(line["price"], 2)} for line in lines]
+    def amount(value: Any, currency: str | None) -> str | None:
+        return None if value is None else f"{num(value, 2)} {currency or ''}".strip()
+
+    shaped = [{**line, "price_net": amount(line["price"], line.get("currency"))} for line in lines]
     total = sum(line["price"] for line in lines if line["price"] is not None)
+    currencies = {line.get("currency") for line in lines if line["price"] is not None}
+    total_currency = currencies.pop() if len(currencies) == 1 else None
     columns = [
         ("Line", "id"),
         ("Machine", "machine_id"),
@@ -79,8 +84,9 @@ def quote_lines(lines: list[dict[str, Any]]) -> str:
     ]
     return (
         table(shaped, columns)
-        + f"\n\nTotal (net): {num(total, 2)}. Prices are already net of the revision's discount; "
-        "do not apply the discount again. A machine of — means the line isn't tied to an installed machine."
+        + f"\n\nTotal (net): {amount(total, total_currency)}. Prices are already net of the revision's discount, in "
+        "the currency shown; do not apply the discount again. A machine of — means the line isn't tied to an "
+        "installed machine."
     )
 
 

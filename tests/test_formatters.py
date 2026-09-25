@@ -83,14 +83,19 @@ def test_zero_discount_is_shown_not_hidden():
     assert "no revisions" in commercial.quote_revisions([])
 
 
-def test_quote_lines_null_machine_total_and_net_note():
+def test_quote_lines_null_machine_currency_total_and_net_note():
     text = commercial.quote_lines(
-        [{"id": "QLN-1", "quote_revision_id": "R", "machine_id": None, "price": 1200.5, "description": "Kit"},
-         {"id": "QLN-2", "quote_revision_id": "R", "machine_id": "MCH-0001", "price": None, "description": "Service"}]
+        [{"id": "QLN-1", "quote_revision_id": "R", "machine_id": None, "price": 1200.5, "currency": "GBP", "description": "Kit"},
+         {"id": "QLN-2", "quote_revision_id": "R", "machine_id": "MCH-0001", "price": None, "currency": "GBP", "description": "Service"}]
     )
-    assert "| QLN-1 | — | 1200.5 | Kit |" in text and "| QLN-2 | MCH-0001 | — | Service |" in text
-    assert "Total (net): 1200.5" in text and "do not apply the discount again" in text
+    assert "| QLN-1 | — | 1200.5 GBP | Kit |" in text and "| QLN-2 | MCH-0001 | — | Service |" in text
+    assert "Total (net): 1200.5 GBP" in text and "do not apply the discount again" in text
     assert "No lines were found" in commercial.quote_lines([])
+
+
+def test_quote_lines_without_a_currency_still_render():
+    text = commercial.quote_lines([{"id": "L", "quote_revision_id": "R", "machine_id": "M", "price": 10, "description": "x"}])
+    assert "| L | M | 10 | x |" in text and "Total (net): 10." in text
 
 
 ORDER = {"id": "ORD-1", "quote_id": "QTE-1", "company_id": "CMP-001", "order_status": "Closed", "order_date": "2025-04-08",
