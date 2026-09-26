@@ -112,6 +112,42 @@ def test_orders():
     assert "No fulfilment lines were found" in commercial.order_lines([])
 
 
+def _overview_quote(id, status, total, currency="EUR", orders=()):
+    return {"id": id, "currency": currency, "created_at": "2026-01-20", "valid_until": "2026-03-06", "description": "d",
+            "latest_revision_id": f"REV-{id}", "latest_revision_number": 1, "status": status, "discount_rate": 0.06,
+            "line_count": 2, "net_total": total, "order_ids": list(orders)}
+
+
+def test_quotes_overview_lists_state_and_totals_per_status_without_mixing_currencies():
+    text = commercial.quotes_overview([
+        _overview_quote("Q1", "Draft", 10950.0),
+        _overview_quote("Q2", "Approved", 15472.4, orders=["ORD-1", "ORD-2"]),
+        _overview_quote("Q3", "Approved", 900.0, currency="GBP"),
+        _overview_quote("Q4", "Draft", None),
+    ])
+    assert "| Q1 | Draft | REV-Q1 | 6% | 2 | 10950 EUR | 2026-03-06 | — | d |" in text
+    assert "| Q2 | Approved | REV-Q2 | 6% | 2 | 15472.4 EUR | 2026-03-06 | ORD-1, ORD-2 | d |" in text
+    assert "- Draft: 2 quote(s), 10950 EUR" in text
+    assert "- Approved: 2 quote(s), 15472.4 EUR + 900 GBP" in text
+    assert "- All: 4 quote(s), 26422.4 EUR + 900 GBP" in text
+    assert "do not apply it again" in text
+    assert "no quotes" in commercial.quotes_overview([])
+
+
+def test_orders_overview_shows_value_and_totals_per_year():
+    orders = [
+        {**ORDER, "id": "ORD-3", "order_date": "2026-03-02", "quote_revision_id": "QREV-16", "line_count": 3, "net_total": 15472.4},
+        {**ORDER, "id": "ORD-2", "order_date": "2025-08-05", "quote_revision_id": "QREV-9", "line_count": 4, "net_total": 15927.4},
+        {**ORDER, "id": "ORD-1", "quote_revision_id": None, "line_count": 0, "net_total": None},
+    ]
+    text = commercial.orders_overview(orders)
+    assert "| ORD-3 | QTE-1 | QREV-16 | Closed | Installed | 2026-03-02 | 2025-06-24 | 3 | 15472.4 EUR |" in text
+    assert "| ORD-1 | QTE-1 | — | Closed | Installed | 2025-04-08 | 2025-06-24 | 0 | — |" in text
+    assert "- 2026: 1 order(s), 15472.4 EUR" in text and "- 2025: 2 order(s), 15927.4 EUR" in text
+    assert "- All: 3 order(s), 31399.8 EUR" in text
+    assert "no orders" in commercial.orders_overview([])
+
+
 def test_quote_details():
     text = commercial.quote_details({"id": "QTE-1", "company_id": "C", "currency": "EUR", "created_at": "2025-03-10",
                                      "valid_until": "2025-04-24", "description": None})

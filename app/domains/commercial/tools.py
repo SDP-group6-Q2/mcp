@@ -6,6 +6,24 @@ from app.params import READ_ONLY, OrderId, QuoteId, QuoteRevisionId
 
 
 def register(mcp: FastMCP) -> None:
+    @mcp.tool(title="Quotes overview with status and totals", annotations=READ_ONLY)
+    async def get_quotes_overview(ctx: Context) -> str:
+        """Every quote of the company in one call, newest first: its status (the latest revision's), latest revision
+        id, discount, line count, net total, validity date and the orders made from it, plus the net totals per
+        status. Use it for any list, status overview, count, total or comparison across quotes (e.g. which quotes
+        are open, their total value, which never became an order) instead of looking up quotes one by one."""
+        quotes = await ApiClient.for_request(ctx).get("/quotes/overview")
+        return formatters.quotes_overview(quotes)
+
+    @mcp.tool(title="Orders overview with values and totals", annotations=READ_ONLY)
+    async def get_orders_overview(ctx: Context) -> str:
+        """Every order of the company in one call, newest first: quote, approved revision, order and shipment status,
+        dates, line count and net value (from the quote's approved revision), plus the net totals per order year.
+        Use it for any list, total, spend or year-on-year comparison across orders instead of looking up orders and
+        quotes one by one."""
+        orders = await ApiClient.for_request(ctx).get("/orders/overview")
+        return formatters.orders_overview(orders)
+
     @mcp.tool(title="List the company's quotes", annotations=READ_ONLY)
     async def get_company_quotes(ctx: Context) -> str:
         """The company's quotes, newest first: id, currency, dates, description. A quote has no status of its own;

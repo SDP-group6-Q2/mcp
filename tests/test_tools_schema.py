@@ -7,8 +7,8 @@ from app.main import mcp
 TOOLS = asyncio.run(mcp.list_tools())
 
 
-def test_all_nineteen_tools_are_registered():
-    assert len(TOOLS) == 19
+def test_all_twenty_one_tools_are_registered():
+    assert len(TOOLS) == 21
 
 
 def test_every_tool_is_declared_read_only_with_a_title():
