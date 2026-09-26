@@ -4,12 +4,16 @@ from app.api_client import ApiClient
 from app.domains.technical import formatters
 from app.params import (
     READ_ONLY,
+    AlarmSeverity,
+    AlarmStatus,
     Bucket,
     Cursor,
     MachineId,
     ManualQuery,
     SinceDate,
     SinceDateTime,
+    TicketPriority,
+    TicketStatus,
     UntilDate,
     UntilDateTime,
 )
@@ -90,12 +94,16 @@ def register(mcp: FastMCP) -> None:
         since: SinceDateTime = None,
         until: UntilDateTime = None,
         cursor: Cursor = None,
+        status: AlarmStatus = None,
+        severity: AlarmSeverity = None,
     ) -> str:
         """Individual alarm events of a machine, newest first, with code, severity and status. Use it to inspect
-        specific recent events after get_alarm_summary. Results are paged; the output gives the cursor for the next
-        page."""
+        specific recent events after get_alarm_summary; filter by status and severity to get exactly the alarms
+        asked about (e.g. the open ones, or the critical ones since a date) instead of reading through all of them.
+        Results are paged; the output gives the cursor for the next page."""
         page = await ApiClient.for_request(ctx).get(
-            f"/machines/{machine_id}/alarms", {"since": since, "until": until, "cursor": cursor}
+            f"/machines/{machine_id}/alarms",
+            {"since": since, "until": until, "cursor": cursor, "status": status, "severity": severity},
         )
         return formatters.alarm_history(page)
 
@@ -106,12 +114,16 @@ def register(mcp: FastMCP) -> None:
         since: SinceDate = None,
         until: UntilDate = None,
         cursor: Cursor = None,
+        status: TicketStatus = None,
+        priority: TicketPriority = None,
     ) -> str:
         """One machine's maintenance tickets, newest first, each with the alarm that triggered it (blank when the
-        ticket did not come from an alarm). Use it to correlate alarms with maintenance. Results are paged; the
-        output gives the cursor for the next page."""
+        ticket did not come from an alarm). Use it to correlate alarms with maintenance; filter by status and
+        priority to get exactly the tickets asked about (e.g. status ['open'] for the open ones). Results are paged;
+        the output gives the cursor for the next page."""
         page = await ApiClient.for_request(ctx).get(
-            f"/machines/{machine_id}/maintenance", {"since": since, "until": until, "cursor": cursor}
+            f"/machines/{machine_id}/maintenance",
+            {"since": since, "until": until, "cursor": cursor, "status": status, "priority": priority},
         )
         return formatters.maintenance_history(page)
 
@@ -121,12 +133,16 @@ def register(mcp: FastMCP) -> None:
         since: SinceDate = None,
         until: UntilDate = None,
         cursor: Cursor = None,
+        status: TicketStatus = None,
+        priority: TicketPriority = None,
     ) -> str:
         """Maintenance tickets of all the company's machines, newest first, each with its machine. Use it for
-        company-wide questions ("what is open", "what is overdue"); no machine id needed. Results are paged; the
-        output gives the cursor for the next page."""
+        company-wide questions; no machine id needed. Filter by status and priority to get exactly the tickets asked
+        about (e.g. status ['open'] for "what is open", plus priority ['Critical', 'High'] for urgent ones) instead
+        of reading through all of them. Results are paged; the output gives the cursor for the next page."""
         page = await ApiClient.for_request(ctx).get(
-            "/maintenance-tickets/", {"since": since, "until": until, "cursor": cursor}
+            "/maintenance-tickets/",
+            {"since": since, "until": until, "cursor": cursor, "status": status, "priority": priority},
         )
         return formatters.company_tickets(page)
 

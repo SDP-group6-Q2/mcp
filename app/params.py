@@ -30,6 +30,23 @@ Cursor = Annotated[
     str | None,
     Field(description="Opaque token to get the next, older page: copy the cursor printed at the end of the previous page. Omit for the first page."),
 ]
+# One value or a list of values: models often pass a single filter value as a plain string.
+TicketStatus = Annotated[
+    list[Literal["open", "Open", "In progress", "Waiting for parts", "Resolved", "Closed"]] | Literal["open", "Open", "In progress", "Waiting for parts", "Resolved", "Closed"] | None,
+    Field(description="Only tickets with one of these statuses. 'open' means every ticket still needing work (Open, In progress or Waiting for parts): use it for 'open' or 'pending' tickets. Omit for all statuses."),
+]
+TicketPriority = Annotated[
+    list[Literal["Critical", "High", "Medium", "Low"]] | Literal["Critical", "High", "Medium", "Low"] | None,
+    Field(description="Only tickets with one of these priorities, e.g. ['Critical', 'High'] for urgent ones. Omit for all priorities."),
+]
+AlarmStatus = Annotated[
+    list[Literal["Open", "Acknowledged", "Resolved"]] | Literal["Open", "Acknowledged", "Resolved"] | None,
+    Field(description="Only alarms with one of these statuses, e.g. ['Open'] for alarms still active. Omit for all statuses."),
+]
+AlarmSeverity = Annotated[
+    list[Literal["Critical", "High", "Medium", "Low"]] | Literal["Critical", "High", "Medium", "Low"] | None,
+    Field(description="Only alarms with one of these severities, e.g. ['Critical']. Omit for all severities."),
+]
 Bucket = Annotated[Literal["day", "week"], Field(description="Aggregation period: 'day' for a fine trend, 'week' for a long one.")]
 
 ManualQuery = Annotated[

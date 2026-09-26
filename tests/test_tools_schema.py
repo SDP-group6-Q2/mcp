@@ -40,3 +40,15 @@ def test_ids_are_documented_with_examples():
 
 def test_every_tool_description_is_substantial():
     assert all(len(tool.description or "") > 60 for tool in TOOLS)
+
+
+def test_ticket_and_alarm_lists_offer_status_and_priority_or_severity_filters():
+    import json
+
+    by_name = {tool.name: tool.inputSchema["properties"] for tool in TOOLS}
+    for name in ("get_company_maintenance_tickets", "get_maintenance_history"):
+        status, priority = json.dumps(by_name[name]["status"]), json.dumps(by_name[name]["priority"])
+        assert '"open"' in status and "Waiting for parts" in status and "Waiting for parts" in by_name[name]["status"]["description"]
+        assert '"Critical"' in priority
+    alarms = by_name["get_alarm_history"]
+    assert '"Acknowledged"' in json.dumps(alarms["status"]) and '"Critical"' in json.dumps(alarms["severity"])

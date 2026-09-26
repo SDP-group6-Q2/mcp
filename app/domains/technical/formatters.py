@@ -134,7 +134,7 @@ def alarm_summary(rows: list[dict[str, Any]]) -> str:
 
 def alarm_history(page: dict[str, Any]) -> str:
     if not page["rows"]:
-        return "No alarms were found for that machine in that period."
+        return "No alarms were found for that machine in that period (and with that status and severity, if filtered)."
     shaped = _rows(page["rows"], time=lambda r: short_ts(r["timestamp"]))
     columns = [
         ("Alarm", "id"),
@@ -160,7 +160,10 @@ _TICKET_COLUMNS = [
 def maintenance_history(page: dict[str, Any]) -> str:
     """A machine's tickets with the alarm that triggered each (blank for tickets with no alarm)."""
     if not page["rows"]:
-        return "No maintenance tickets were found for that machine in that period."
+        return (
+            "No maintenance tickets were found for that machine in that period (and with that status and priority, "
+            "if filtered)."
+        )
     columns = [*_TICKET_COLUMNS, ("Alarm code", "alarm_code"), ("Alarm severity", "severity")]
     return (
         page_header(page, "tickets", "newest first")
@@ -172,7 +175,10 @@ def maintenance_history(page: dict[str, Any]) -> str:
 
 def company_tickets(page: dict[str, Any]) -> str:
     if not page["rows"]:
-        return "No maintenance tickets were found for the company's machines in that period."
+        return (
+            "No maintenance tickets were found for the company's machines in that period (and with that status and "
+            "priority, if filtered)."
+        )
     columns = [_TICKET_COLUMNS[0], ("Machine", "machine_id"), *_TICKET_COLUMNS[1:]]
     return (
         page_header(page, "tickets", "newest first")
