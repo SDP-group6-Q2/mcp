@@ -9,7 +9,7 @@ from functools import lru_cache
 
 from app.config import settings
 
-EMBEDDING_DIM = 384  # BAAI/bge-small-en-v1.5; must match VECTOR(384) in schema.sql
+EMBEDDING_DIM = 768  # BAAI/bge-base-en-v1.5; must match VECTOR(768) in schema.sql
 _load_lock = threading.Lock()
 
 

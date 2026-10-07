@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS manual_chunks (
     tsv            TSVECTOR GENERATED ALWAYS AS (
                        to_tsvector('english', section_path || ' ' || content)
                    ) STORED,
-    embedding      VECTOR(384) NOT NULL
+    embedding      VECTOR(768) NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS ix_manual_chunks_serial ON manual_chunks (serial_number);

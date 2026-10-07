@@ -9,7 +9,7 @@ class Settings(BaseSettings):
 
     # The manuals RAG lives in its own database on the shared Postgres instance (created on first ingest).
     rag_database_url: str = "postgresql://postgres:postgres@localhost:5432/rag"
-    embedding_model: str = "BAAI/bge-small-en-v1.5"
+    embedding_model: str = "BAAI/bge-base-en-v1.5"
     reranker_model: str = "Xenova/ms-marco-MiniLM-L-6-v2"
     model_cache_dir: str | None = None
 

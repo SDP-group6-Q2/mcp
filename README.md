@@ -50,12 +50,10 @@ and supplies the serial number that identifies the manual; only then is the inde
 The manuals index lives in its **own database** (`rag`) on the shared Postgres, owned by this server. It holds
 derived data only (no company or user data) and can be rebuilt from the PDFs at any time.
 
-- **Ingestion** (`app/rag/ingest.py`): PDF -> outline sections -> boilerplate and table-of-contents pages removed
-  -> section-aware chunks (~200 words, section number/title/breadcrumb and page range kept) -> embeddings.
-  Idempotent: a manual is skipped unless its PDF, the embedding model or the chunker version changed.
+- **Ingestion** (`app/rag/ingest.py`): Details about the ingestion process can be found [here](RAG_INGESTION.md)
 - **Retrieval** (`app/rag/search.py`): per manual, vector search + full-text search, fused (RRF), then the top 15
   reranked by a cross-encoder; the best 5 are returned with section and page citations.
-- **Models** run on ONNX via fastembed (`BAAI/bge-small-en-v1.5`, `Xenova/ms-marco-MiniLM-L-6-v2`), no torch.
+- **Models** run on ONNX via fastembed (`BAAI/bge-base-en-v1.5`, `Xenova/ms-marco-MiniLM-L-6-v2`), no torch.
   They are downloaded on first use into the `mcp_models` volume and loaded at server start.
 
 ```bash
